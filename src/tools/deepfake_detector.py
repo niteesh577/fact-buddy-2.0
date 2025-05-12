@@ -66,7 +66,8 @@ class DeepfakeDetectorTool:
                                  jpeg_score * 0.2 + metadata_score * 0.1)
             
             # Determine if the image is likely manipulated
-            is_deepfake = manipulation_score > 0.6
+            # Convert NumPy boolean to Python boolean if necessary
+            is_deepfake = bool(manipulation_score > 0.6)
             
             # Prepare analysis details
             if manipulation_score > 0.8:
@@ -78,15 +79,16 @@ class DeepfakeDetectorTool:
             else:
                 analysis = "No significant signs of manipulation detected."
             
+            # Convert all NumPy types to Python native types to ensure JSON serialization
             result = {
-                "is_deepfake": is_deepfake,
-                "manipulation_score": round(manipulation_score, 2),
+                "is_deepfake": bool(is_deepfake),
+                "manipulation_score": float(round(manipulation_score, 2)),
                 "analysis": analysis,
                 "details": {
-                    "ela_score": round(ela_score, 2),
-                    "noise_score": round(noise_score, 2),
-                    "jpeg_score": round(jpeg_score, 2),
-                    "metadata_score": round(metadata_score, 2)
+                    "ela_score": float(round(ela_score, 2)),
+                    "noise_score": float(round(noise_score, 2)),
+                    "jpeg_score": float(round(jpeg_score, 2)),
+                    "metadata_score": float(round(metadata_score, 2))
                 },
                 "status": "success"
             }
@@ -156,9 +158,9 @@ class DeepfakeDetectorTool:
             
             # Calculate variance between region noise levels
             if regions:
-                region_variance = np.var(regions) / (np.mean(regions) + 1e-10)
+                region_variance = float(np.var(regions)) / (float(np.mean(regions)) + 1e-10)
                 # High variance can indicate manipulation
-                return min(region_variance, 1.0)
+                return float(min(region_variance, 1.0))
             return 0.0
         except Exception as e:
             logger.warning(f"Noise analysis failed: {str(e)}")
@@ -178,12 +180,12 @@ class DeepfakeDetectorTool:
             cb_dct = cv2.dct(np.float32(cb))
             
             # Simplified analysis of DCT coefficients
-            cr_energy = np.sum(np.abs(cr_dct)) / (cr.shape[0] * cr.shape[1])
-            cb_energy = np.sum(np.abs(cb_dct)) / (cb.shape[0] * cb.shape[1])
+            cr_energy = float(np.sum(np.abs(cr_dct))) / (cr.shape[0] * cr.shape[1])
+            cb_energy = float(np.sum(np.abs(cb_dct))) / (cb.shape[0] * cb.shape[1])
             
             # Inconsistent energy can indicate manipulation
-            energy_diff = abs(cr_energy - cb_energy) / max(cr_energy, cb_energy)
-            return min(energy_diff * 5, 1.0)  # Scale up for better sensitivity
+            energy_diff = float(abs(cr_energy - cb_energy)) / float(max(cr_energy, cb_energy))
+            return float(min(energy_diff * 5, 1.0))  # Scale up for better sensitivity
         except Exception as e:
             logger.warning(f"JPEG artifact analysis failed: {str(e)}")
             return 0.0
